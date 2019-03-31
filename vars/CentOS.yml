@@ -1,0 +1,5 @@
+---
+wptb_php_fpm_service: 'rh-php72-php-fpm'
+wptb_php_ini_location: '/etc/opt/rh/rh-php72/php.ini'
+wptb_php_fpm_config: '/etc/opt/rh/rh-php72/php-fpm.d/www.conf'
+wptb_mysql_cnf: '/etc/my.cnf'

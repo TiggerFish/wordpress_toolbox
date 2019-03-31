@@ -1,0 +1,9 @@
+---
+# vars file for my_wordpress
+# This file should be encrypted with something like ansible-vault
+
+# root password for mysql
+wptb_msql_root_pw: some_secure_password
+
+# user password for the wordpress database
+wptb_wp_msql_pw: a_different_secure_password

@@ -1,0 +1,52 @@
+---
+# Wordpress setup
+- name: "wptb_wordpress.yml: Check to see if Wordpress exists already"
+  stat:
+    path: /var/www/html/wordpress
+  register: check_wordpress
+
+- name: "wptb_wordpress.yml: Download & extract wordpress"
+  unarchive:
+    src: https://en-gb.wordpress.org/latest-en_GB.tar.gz
+    dest: /var/www/html
+    owner: apache
+    group: apache
+    mode: u=rwX,g=rX,o=
+    remote_src: yes
+  when: not check_wordpress.stat.exists
+  notify: wptb_restart_apache
+
+- name: "wptb_wordpress.yml: Check to see if Wordpress has been configured"
+  stat:
+    path: /var/www/html/wordpress/wp-config.php
+  register: check_wordpress_config
+
+- name: "wptb_wordpress.yml: Copy the config file"
+  command: cp -p /var/www/html/wordpress/wp-config-sample.php /var/www/html/wordpress/wp-config.php
+  when: not check_wordpress_config.stat.exists
+
+- name: "wptb_wordpress.yml: Configure the config file"
+  replace:
+    path: /var/www/html/wordpress/wp-config.php
+    regexp: '{{ item.exp }}'
+    replace: '{{ item.replace }}'
+  with_items:
+    - { exp: 'username_here', replace: '{{ wptb_wp_msql_user }}'}
+    - { exp: 'database_name_here', replace: '{{ wptb_wp_msql_db }}'}
+    - { exp: 'password_here', replace: '{{ wptb_wp_msql_pw }}'}
+  no_log: True
+  notify: wptb_restart_apache
+
+- name: "wptb_wordpress.yml: Disable php error reporting and set db table table_prefix"
+  lineinfile:
+    path: /var/www/html/wordpress/wp-config.php
+    regexp: '{{ item.exp }}'
+    line: '{{ item.line }}'
+  with_items:
+    - { exp: '^error_reporting', line: 'error_reporting(0);'}
+    - { exp: "^@ini_set", line: "@ini_set(‘display_errors’, 0);"}
+    - { exp: '^\$table_prefix', line: "$table_prefix = 'wp_{{ wptb_db_table_prefix }}';"}
+
+- include: wptb_permissions.yml
+  become: yes
+

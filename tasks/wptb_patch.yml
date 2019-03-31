@@ -1,0 +1,48 @@
+---
+# Patch Wordpress Core
+- name: "wptb_patch.yml: Download & extract wordpress"
+  unarchive:
+    src: https://en-gb.wordpress.org/latest-en_GB.tar.gz
+    dest: /tmp
+    remote_src: yes
+  delegate_to: localhost
+
+- name: "wptb_patch.yml: Checksum for new wp-config-sample.php"
+  stat:
+    path: /tmp/wordpress/wp-config-sample.php
+  delegate_to: localhost
+  register: newfile
+- debug: var=newfile.stat.checksum
+
+- name: "wptb_patch.yml: Checksum for current wp-config-sample.php"
+  stat:
+    path: /var/www/html/wordpress/wp-config-sample.php
+  register: currfile
+- debug: var=currfile.stat.checksum
+
+- name: "wptb_patch.yml: Check checksum difference"
+  debug:
+    msg: "File Compare OK If Not Failed"
+  failed_when: 'newfile.stat.checksum != currfile.stat.checksum'
+
+- name: "wptb_patch.yml: Remove old components"
+  file:
+    path: '{{ item }}'
+    state: absent
+  with_items:
+    - '/var/www/html/wordpress/wp-includes'
+    - '/var/www/html/wordpress/wp-admin'
+
+- name: "wptb_patch.yml: Synchronise the new components"
+  synchronize:
+    src: /tmp/wordpress/
+    dest: /var/www/html/wordpress/
+
+- include: wptb_permissions.yml
+  become: yes
+
+- name: "wptb_patch.yml: Remove downloaded content"
+  file:
+    path: /tmp/wordpress
+    state: absent
+  delegate_to: localhost

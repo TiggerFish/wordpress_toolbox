@@ -1,0 +1,66 @@
+---
+## Set up the database
+- name: "wptb_database.yml: Start and enable mariadb"
+  service:
+    name: mariadb
+    state: started
+    enabled: yes
+# Harden: Set root password
+- name: "wptb_database.yml: Set root password"
+  mysql_user:
+    check_implicit_admin: yes
+    login_password: '{{ wptb_msql_root_pw }}'
+    login_user: root
+    name: root
+    host_all: yes
+    password: '{{ wptb_msql_root_pw }}'
+    login_unix_socket: '/var/lib/mysql/mysql.sock'
+  notify: wptb_restart_mariadb
+# Harden: Remove test db
+- name: "wptb_database.yml: Remove test db"
+  mysql_db:
+    login_password: '{{ wptb_msql_root_pw }}'
+    login_user: root
+    db: test
+    state: absent
+    login_unix_socket: '/var/lib/mysql/mysql.sock'
+  notify: wptb_restart_mariadb
+# Harden: Remove anonymous accounts
+- name: "wptb_database.yml: Remove anonymous accounts"
+  mysql_user:
+    login_password: '{{ wptb_msql_root_pw }}'
+    login_user: root
+    name: ''
+    host_all: yes
+    state: absent
+    login_unix_socket: '/var/lib/mysql/mysql.sock'
+  notify: wptb_restart_mariadb
+# Harden: Remove networking (we're only working locally)
+- name: "wptb_database.yml: Remove networking"
+  ini_file:
+    path: '{{ wptb_mysql_cnf }}'
+    section: mysqld
+    option: skip-networking
+    allow_no_value: yes
+  notify: wptb_restart_mariadb
+# Create WordPress Database
+- name: "wptb_database.yml: Create db for wordpress"
+  mysql_db:
+    login_password: '{{ wptb_msql_root_pw }}'
+    login_user: root
+    name: '{{ wptb_wp_msql_db }}'
+    state: present
+    login_unix_socket: '/var/lib/mysql/mysql.sock'
+  notify: wptb_restart_mariadb
+# Create WordPress User
+- name: "wptb_database.yml: Create user for wordpress db"
+  mysql_user:
+    login_password: '{{ wptb_msql_root_pw }}'
+    login_user: root
+    name: '{{ wptb_wp_msql_user }}'
+    state: present
+    password: '{{ wptb_wp_msql_pw }}'
+    priv: "{{ wptb_wp_msql_db }}.*:ALL"
+    login_unix_socket: '/var/lib/mysql/mysql.sock'
+  notify: wptb_restart_mariadb
+

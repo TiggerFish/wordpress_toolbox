@@ -1,0 +1,53 @@
+---
+- name: "wptb_permissions.yml: Maintain ownership, permissions and SE Linux context for wp-content"
+# Allow apache to read/write to the wp-content dir
+  file:
+    path: /var/www/html/wordpress/wp-content
+    owner: apache
+    group: apache
+    mode: u=rwX,g=rwX,o=
+    setype: httpd_sys_rw_content_t
+    recurse: yes
+  notify: wptb_restart_apache
+
+# All the files in the wordpress directory read only for apache
+- name: "wptb_permissions.yml: Find files in wordpress directory"
+  find:
+    paths: /var/www/html/wordpress
+    recurse: no
+    file_type: file
+  register: files_matched
+- name: "wptb_permissions.yml: Maintain owenership, permissions and SE Linux context for files in the wordpress directory"
+  file:
+    path: '{{ item.path }}'
+    owner: apache
+    group: apache
+    mode: u=rwX,g=rX,o=
+    setype: httpd_sys_content_t
+    recurse: no
+  no_log: True
+  with_items:
+    - "{{ files_matched.files }}"
+    - { path: '/var/www/html/wordpress' }
+  notify: wptb_restart_apache
+
+# Other subdirs under wordpress read only for apache
+- name: "wptb_permissions.yml: Find subdirs under wordpress exclude wp-content"
+  find:
+    paths: /var/www/html/wordpress
+    recurse: no
+    file_type: directory
+    excludes: wp-content
+  register: dirs_matched
+- name: "wptb_permissions.yml: Maintain owenership, permissions and SE Linux context for subdirs under wordpress except wp-content"
+  file:
+    path: '{{ item.path }}'
+    owner: apache
+    group: apache
+    mode: u=rwX,g=rX,o=
+    setype: httpd_sys_content_t
+    recurse: yes
+  no_log: True
+  with_items:
+    - "{{ dirs_matched.files }}"
+  notify: wptb_restart_apache

@@ -1,0 +1,37 @@
+---
+# Work In Progress
+- name: "wptb_restore.yml: Restoring from File"
+  debug: msg=/data/{{ ansible_fqdn }}/{{ wptb_restore_date }}-{{ wptb_restore_type }}-{{ ansible_fqdn }}.tar.gz
+- name: "wptb_restore.yml: Check the specified backup exists exit if not found"
+  stat:
+    path: /data/{{ ansible_fqdn }}/{{ wptb_restore_date }}-{{ wptb_restore_type }}-{{ ansible_fqdn }}.tar.gz
+  register: arch_file
+  delegate_to: localhost
+- name: "wptb_restore.yml: Failing"
+  fail:
+    msg: "Specified BackUp doesn't exist"
+  when: not arch_file.stat.exists
+
+- name: "wptb_restore.yml: Delete existing install"
+  file:
+    path:
+    state: absent
+  with_items:
+    - '/var/www/html/wordpress'
+    - '/etc/pki/tls'
+
+- name: "wptb_restore.yml: Restore files"
+  unarchive:
+    src: /data/{{ ansible_fqdn }}/{{ wptb_restore_date }}-{{ wptb_restore_type }}-{{ ansible_fqdn }}.tar.gz
+    dest: /
+
+- include: wptb_permissions.yml
+  become: yes
+
+- name: "wptb_restore.yml: Restore database"
+  mysql_db:
+    login_password: '{{ wptb_msql_root_pw }}'
+    login_user: root
+    state: import
+    name: all
+    target: /data/mariadb.sql

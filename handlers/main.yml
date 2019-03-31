@@ -1,0 +1,22 @@
+---
+# handlers file for my_wordpress
+- name: wptb_restart_mariadb
+  become: yes
+  service:
+    name: mariadb
+    state: restarted
+- name: wptb_restart_apache
+  become: yes
+  service:
+    name: httpd
+    state: restarted
+- name: wptb_restart_iptables
+  become: yes
+  service: 
+    name: iptables
+    state: restarted
+- name: wptb_restart_php_fpm
+  become: yes
+  service:
+    name: '{{wptb_php_fpm_service}}'
+    state: restarted

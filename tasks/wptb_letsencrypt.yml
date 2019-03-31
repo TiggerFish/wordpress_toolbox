@@ -1,0 +1,84 @@
+---
+# Create some variables for use by openssl modules
+- name: "wptb_letsencrypt.yml: Set openssl_san"
+  set_fact:
+    wptb_openssl_san: "{{ wptb_openssl_san }} + ['{{ item.type }}:{{ item.value }}']"
+  with_items: '{{ wptb_subj_alt_names }}'
+# Make sure http is running.
+- name: "wptb_letsencrypt.yml: Make sure httpd is running"
+  service:
+    name: httpd
+    state: started
+# Generate a Letsencrypt account key
+- name: "wptb_letsencrypt.yml: Generate a Letsencrypt account key"
+  openssl_privatekey:
+    size: 4096
+    path: /etc/pki/tls/private/{{ wptb_site_cn }}-letsencrypt.key
+# Genetrare a private key for the domain
+- name: "wptb_letsencrypt.yml: Genetrare a private key for the common name {{ wptb_site_cn }}"
+  openssl_privatekey:
+    size: 4096
+    path: /etc/pki/tls/private/{{ wptb_site_cn }}.key
+# Generates a CSR for the domain
+- name: "wptb_letsencrypt.yml: Genterates a CSR"
+  openssl_csr:
+    path: /etc/pki/tls/certs/{{ wptb_site_cn }}.csr
+    privatekey_path: /etc/pki/tls/private/{{ wptb_site_cn }}.key
+    common_name: '{{ wptb_site_cn }}'
+    subject_alt_name: '{{ wptb_openssl_san }}'
+    ocsp_must_staple:
+# Create Acme account
+- name: "wptb_letsencrypt.yml: Make sure account exists and has given contacts. We agree to TOS."
+  acme_account:
+    acme_directory: '{{ wptb_le_server }}'
+    acme_version: 2
+    account_key_src: /etc/pki/tls/private/{{ wptb_site_cn }}-letsencrypt.key
+    state: present
+    terms_agreed: yes
+    contact: mailto:{{ wptb_email }}
+# Create a challenge
+- name: "wptb_letsencrypt.yml: Create a challenge for {{ wptb_site_cn }}"
+  acme_certificate:
+    acme_directory: '{{ wptb_le_server }}'
+    acme_version: 2
+    account_key_src: /etc/pki/tls/private/{{ wptb_site_cn }}-letsencrypt.key
+    terms_agreed: yes
+    account_email: mailto:{{ wptb_email }}
+    csr: /etc/pki/tls/certs/{{ wptb_site_cn }}.csr
+    dest: /etc/pki/tls/certs/{{ wptb_site_cn }}.crt
+  register: challenge
+- debug:
+    var: challenge
+    verbosity: 1
+
+# Create the challenge data
+- name: "wptb_letsencrypt.yml: Create the challenge data"
+  block:
+    - name: "wptb_letsencrypt.yml: Make sure /var/www/html/.well-known/acme-challenge exists"
+      file:
+        path: /var/www/html/.well-known/acme-challenge
+        state: directory
+        mode: 0700
+        owner: apache
+    - name: "wptb_letsencrypt.yml: Create the challenge data"
+      copy:
+        dest: /var/www/html/{{ challenge['challenge_data'][item.value]['http-01']['resource'] }}
+        content: "{{ challenge['challenge_data'][item.value]['http-01']['resource_value'] }}"
+        owner: apache
+      with_items: '{{ wptb_subj_alt_names }}'
+  when: challenge is changed
+
+# Resolve the challenge and retrieve the certificate
+- name: "wptb_letsencrypt.yml: Validate challenge and get certs"
+  acme_certificate:
+    acme_directory: '{{ wptb_le_server }}'
+    acme_version: 2
+    account_key_src: /etc/pki/tls/private/{{ wptb_site_cn }}-letsencrypt.key
+    terms_agreed: yes
+    account_email: mailto:{{ wptb_email }}
+    csr: /etc/pki/tls/certs/{{ wptb_site_cn }}.csr
+    dest: /etc/pki/tls/certs/{{ wptb_site_cn }}.crt
+    fullchain_dest: /etc/pki/tls/certs/{{ wptb_site_cn }}-fullchain.crt
+    chain_dest: /etc/pki/tls/certs/{{ wptb_site_cn }}-intermediate.crt
+    data: "{{ challenge }}"
+

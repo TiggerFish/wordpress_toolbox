@@ -1,0 +1,86 @@
+---
+# Apache Config
+- name: "wptb_apache.yml: Make sure httpd is running"
+  service:
+    name: httpd
+    state: started
+    enabled: yes
+# Virtual host config
+- name: "wptb_apache.yml: Create virtual host config for {{ wptb_site_cn }}"
+  template:
+    src: wptb_wordpress.conf.j2
+    dest: /etc/httpd/conf.d/wptb_wordpress.conf
+    owner: apache
+    group: apache
+    mode: 0440
+  notify: wptb_restart_apache
+
+#  notify: wptb_restart_apache
+- name: "wptb_apache.yml: Set Directory /var/www/html Options to None"
+  replace:
+    path: /etc/httpd/conf/httpd.conf
+    regexp: '^    Options Indexes FollowSymLinks'
+    replace: '    Options None'
+  notify: wptb_restart_apache
+
+# PHP 7.2 config
+# Make sure the /run/php-fpm directory for the local socket exists
+- name: "wptb_apache.yml: Make sure the /run/php-fpm directory exists"
+  file:
+    path: /run/php-fpm
+    state: directory
+    mode: 0700
+    owner: apache
+    group: apache
+- name: "wptb_apache.yml: Make sure the /run/php-fpm directory is created on reboot"
+  copy:
+    dest: /usr/lib/tmpfiles.d/php-fpm.conf
+    mode: 0644
+    owner: root
+    group: root
+    content:
+      d /run/php-fpm 700 apache apache
+
+# Start and enable php
+- name: "wptb_apache.yml: Start and enable php-fpm"
+  service:
+    name: '{{ wptb_php_fpm_service }}'
+    state: started
+    enabled: yes
+
+# update php.ini
+- name: "wptb_apache.yml: Update php.ini"
+  lineinfile:
+    path: '{{ wptb_php_ini_location }}'
+    regexp: "^expose_php"
+    line: "expose_php = Off"
+  notify:
+    - wptb_restart_php_fpm
+    - wptb_restart_apache
+
+# update fpm config
+- name: "wptb_apache.yml: Update {{ wptb_php_fpm_config }}"
+  lineinfile:
+    path: '{{ wptb_php_fpm_config }}'
+    regexp: '{{ item.exp }}'
+    line: '{{ item.line }}'
+  with_items:
+    - { exp: '^listen =', line: 'listen = /run/php-fpm/www.sock'}
+    - { exp: '^listen.owner =', line: 'listen.owner = apache'}
+    - { exp: '^listen.mode =', line: 'listen.mode = 0660'}
+  notify:
+    - wptb_restart_php_fpm
+    - wptb_restart_apache
+
+# Conf files for apache
+- name: "wptb_apache.yml: Deploy conf files"
+  copy:
+    src: '{{ item }}'
+    dest: /etc/httpd/conf.d/
+    owner: apache
+    group: apache
+    mode: 0400
+  with_items:
+    - 'etc/httpd/conf.d/php.conf'
+    - 'etc/httpd/conf.d/wptb_apache_security.conf'
+  notify: wptb_restart_apache

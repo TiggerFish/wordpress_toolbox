@@ -1,0 +1,19 @@
+---
+dependencies: []
+
+galaxy_info:
+  author: TiggerFish
+  description: Wordpress installation and management
+  issue_tracker_url: https://github.com/TiggerFish/wordpress_toolbox/issues
+  company: "BGP"
+  license: "license (GPL-3.0)"
+  min_ansible_version: 2.4
+  platforms:
+    - name: EL
+      versions:
+        - 7
+    - name: Fedora
+      versions:
+        - 29
+  galaxy_tags:
+    - wordpress

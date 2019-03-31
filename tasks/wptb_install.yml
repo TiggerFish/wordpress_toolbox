@@ -1,0 +1,49 @@
+---
+# CentOS
+- name: CentOS Install components
+  block:
+  - name: "wptb_install.yml: CentOS Install first pass"
+    yum:
+      name:
+        - centos-release-scl
+        - epel-release
+      state: present
+  - name: "wptb_install.yml: CentOS Install second pass"
+    yum:
+      name:
+        - rh-php72
+        - rh-php72-php
+        - rh-php72-php-fpm
+        - rh-php72-php-gd
+        - rh-php72-php-mysqlnd
+        - MySQL-python
+        - httpd
+        - mod_ssl
+        - mariadb-server
+        - mariadb
+        - python2-pip
+        - rsync
+      state: present
+  - name: "wptb_install.yml: CentOS Install PyOpenSSL from pip"
+    pip:
+      name: pyOpenSSL
+      state: present
+  when: ansible_distribution == 'CentOS'
+# Fedora
+- name: "wptb_install.yml: Fedora Install components"
+  dnf:
+    name:
+      - httpd
+      - mariadb-server
+      - mariadb
+      - php
+      - php-mysqlnd
+      - php-gd
+      - python3-PyMySQL
+      - python3-pyOpenSSL
+      - mod_ssl
+      - tar
+      - rsync
+    state: present
+  when: ansible_distribution == 'Fedora'
+

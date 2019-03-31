@@ -1,0 +1,31 @@
+<VirtualHost _default_:80>
+ ServerName {{ wptb_site_cn }}
+{% if wptb_subj_alt_names | length > 1 %}
+ ServerAlias{% for nums in range (1, wptb_subj_alt_names | length) %} {{ wptb_subj_alt_names[nums].value }}{% if loop.last %}
+
+{% endif %}{% endfor %}
+{% endif %}
+ Redirect permanent / https://{{ wptb_site_cn }}
+</VirtualHost>
+
+
+<VirtualHost _default_:443>
+ SSLEngine on
+ ServerName {{ wptb_site_cn }}
+{% if wptb_subj_alt_names | length > 1 %}
+ ServerAlias{% for nums in range (1, wptb_subj_alt_names | length) %} {{ wptb_subj_alt_names[nums].value }}{% if loop.last %}
+
+{% endif %}{% endfor %}
+{% endif %}
+ DocumentRoot /var/www/html/wordpress
+ ErrorLog logs/{{ wptb_site_cn }}_ssl_error_log
+ TransferLog logs/{{ wptb_site_cn }}_ssl_access_log
+ SSLCertificateFile /etc/pki/tls/certs/{{ wptb_site_cn }}.crt
+ SSLCertificateKeyFile /etc/pki/tls/private/{{ wptb_site_cn }}.key
+ SSLCertificateChainFile /etc/pki/tls/certs/{{ wptb_site_cn }}-intermediate.crt
+ Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains"
+ SSLCipherSuite ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA256:DHE-RSA-AES256-SHA:ECDHE-ECDSA-DES-CBC3-SHA:!DSS
+ SSLHonorCipherOrder on
+ SSLCompression off
+ SSLProtocol all -SSLv2 -SSLv3 -TLSv1 -TLSv1.1
+</VirtualHost>

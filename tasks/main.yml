@@ -1,0 +1,71 @@
+---
+# tasks file for my_wordpress
+- name: Check OS and Version
+  fail:
+      msg: "This playbook can only be run against CentOS 7 or Fedora 29. {{ ansible_distribution }} {{ ansible_distribution_major_version }} is not supported."
+  when:
+      - "(ansible_distribution != 'Fedora') and (ansible_distribution != 'CentOS')"
+      - "(ansible_distribution_major_version is version('7', '!=')) and (ansible_distribution == 'CentOS')"
+      - "(ansible_distribution_major_version is version('29', '!=')) and (ansible_distribution == 'Fedora')"
+# OS Vars
+- name: "Main: Include OS specific vars"
+  include_vars:
+    file: "{{ ansible_distribution }}.yml"
+  tags:
+    - apache
+    - database
+
+# yum or dnf install required rpms
+- include: wptb_install.yml
+  become: yes
+  tags:
+    - rpm_install
+
+# sets up a local mariadb
+- include: wptb_database.yml
+  become: yes
+  tags:
+    - database
+
+# Optional firewall config, not idempotent
+- include: wptb_firewall.yml
+  become: yes
+  when: wptb_update_firewall
+  tags:
+    - firewall
+
+# Gets a letsencrypt ssl cert for the configured domain
+- include: wptb_letsencrypt.yml
+  become: yes
+  tags:
+    - letsencrypt
+
+# Dowloads and configures wordpress
+- include: wptb_wordpress.yml
+  become: yes
+  tags:
+    - wordpress
+
+# Configures apache
+- include: wptb_apache.yml
+  become: yes
+  tags:
+    - apache
+# Backup
+- include: wptb_backup.yml
+  become: yes
+  when: wptb_back_up
+  tags:
+    - backup
+# Patch
+- include: wptb_patch.yml
+  become: yes
+  when: wptb_patch_it
+  tags:
+    - patch
+# Restore
+- include: wptb_restore.yml
+  become: yes
+  when: wptb_restore
+  tags:
+    - restore

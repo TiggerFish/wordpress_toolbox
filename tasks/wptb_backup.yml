@@ -1,0 +1,105 @@
+---
+- name: "wptb_backup.yml: Create local base dirs for Backups"
+  file:
+    path: /data/{{ ansible_fqdn }}
+    state: directory
+    owner: rob
+    group: rob
+    mode: 0700
+  delegate_to: localhost
+
+- name: "wptb_backup.yml: Create remote backup dir"
+  file:
+    path: /data
+    state: directory
+    owner: root
+    group: root
+    mode: 0700
+
+- name: "wptb_backup.yml: Dump Database"
+  mysql_db:
+    login_password: '{{ wptb_msql_root_pw }}'
+    login_user: root
+    state: dump
+    name: all
+    target: /data/mariadb.sql
+
+- name: "wptb_backup.yml: Determine archive type"
+  block:
+    - name: "wptb_backup.yml: Always set daily archive type"
+      set_fact:
+        arch_name: daily
+    - name: "wptb_backup.yml: Set weekly if applicable"
+      set_fact:
+        arch_name: weekly
+      when: ansible_date_time.weekday == wptb_back_up_weekly_day
+    - name: "wptb_backup.yml: Set monthly if applicable"
+      set_fact:
+        arch_name: monthly
+      when: ansible_date_time.day == wptb_back_up_monthly_date
+    - name: "wptb_backup.yml: Set yearly if applicable"
+      set_fact:
+        arch_name: yearly
+      when: ansible_date_time.month == wptb_back_up_yearly_date[0] and ansible_date_time.day == wptb_back_up_yearly_date[1]
+    - debug:
+        msg: "Will create a {{ arch_name }} backup"
+- name: "wptb_backup.yml: Assemble the BackupFiles"
+  archive:
+    path: '{{ wptb_bits_to_backup }}'
+    dest: /data/{{ ansible_date_time.date }}-{{ arch_name }}-{{ ansible_fqdn }}.tar.gz
+    format: gz
+  vars:
+    wptb_bits_to_backup: "[ '/var/www/html/wordpress', '/etc/pki/tls', '/data/mariadb.sql' ]"
+
+- name: "wptb_backup.yml: Copy Backup to local"
+  synchronize:
+    src: /data/{{ ansible_date_time.date }}-{{ arch_name }}-{{ ansible_fqdn }}.tar.gz
+    dest: /data/{{ ansible_fqdn }}/
+    mode: pull
+
+- name: "wptb_backup.yml: Clean up working files"
+  file:
+    path: '{{ item }}'
+    state: absent
+  with_items:
+    - '/data/mariadb.sql'
+    - '/data/{{ ansible_date_time.date }}-{{ arch_name }}-{{ ansible_fqdn }}.tar.gz'
+
+- name: "wptb_backup.yml: Find Expired Daily Backups"
+  find:
+    paths: /data/{{ ansible_fqdn }}
+    use_regex: yes
+    patterns: "^[0-9]+-([0-9]+-){2}daily-{{ ansible_fqdn }}.tar.gz"
+    age: "{{ wptb_back_up_days_to_keep }}d"
+  register: found_it
+  delegate_to: localhost
+
+- name: "wptb_backup.yml: Remove Expired Daly Backups"
+  include: wptb_purge.yml
+  when: found_it.matched != "0"
+
+- name: "wptb_backup.yml: Find Expired Weekly Backups"
+  find:
+    paths: /data/{{ ansible_fqdn }}
+    use_regex: yes
+    patterns: "^[0-9]+-([0-9]+-){2}weekly-{{ ansible_fqdn }}.tar.gz"
+    age: "{{ wptb_back_up_weeks_to_keep }}w"
+  register: found_it
+  delegate_to: localhost
+
+- name: "wptb_backup.yml: Remove Expired Weekly Backups"
+  include: wptb_purge.yml
+  when: found_it.matched != "0"
+
+- name: "wptb_backup.yml: Find Expired Monthly Backups"
+  find:
+    paths: /data/{{ ansible_fqdn }}
+    use_regex: yes
+    patterns: "^[0-9]+-([0-9]+-){2}monthly-{{ ansible_fqdn }}.tar.gz"
+    age: "{{ wptb_back_up_months_to_keep }}m"
+  register: found_it
+  delegate_to: localhost
+
+- name: "wptb_backup.yml: Remove Expired Monthly Backups"
+  include: wptb_purge.yml
+  when: found_it.matched != "0"

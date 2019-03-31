@@ -1,0 +1,6 @@
+- name: "wptb_purge.yml: Remove Expired Backups"
+  file:
+    path: '{{ item.path }}'
+    state: absent
+  with_items: '{{ found_it.files }}'
+  delegate_to: localhost

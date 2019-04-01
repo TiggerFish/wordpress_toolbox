@@ -12,11 +12,11 @@
     state: restarted
 - name: wptb_restart_iptables
   become: yes
-  service: 
+  service:
     name: iptables
     state: restarted
 - name: wptb_restart_php_fpm
   become: yes
   service:
-    name: '{{wptb_php_fpm_service}}'
+    name: '{{ wptb_php_fpm_service }}'
     state: restarted

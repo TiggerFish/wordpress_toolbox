@@ -22,7 +22,7 @@ Role Variables
 * **wptb_msql_db:** The name for the wordpress database.
 * **wptb_msql_user:** The name of the user for the wordpress database.
 * **wptb_db_table_prefix:** The prefix for the wordpress database table names.
-* **wptb_update_firewall:** true | false Run the firewall play, see my earlier comments about it being pants.
+* **wptb_update_firewall:** true | false Run the firewall play, yes or no.
 * **wptb_loclan:** A list of local lan addresses or networks that will be given TCP port 22 access if the firewall play runs.
 * **wptb_email:** Email address used for the letsencrypt transaction.
 * **wptb_le_server:** The letsencrypt server to request the ssl certificates from.
@@ -42,23 +42,52 @@ Role Variables
 Dependencies
 ------------
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+None, this role is self contained.
 
 Example Playbook
 ----------------
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+```---
+- name: Install wordpress_toolbox role
+  hosts: all
+  become: yes
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+  roles: 
+    - role: wordpress_toolbox
+      wptb_msql_root_pw: *hJdt*Yt*p+v&D/j-L+Eqpo
+      wptb_wp_msql_pw: h%iek%NeRLbMm^\z4k>is
+      wptb_wp_msql_db: wpdbuser
+      wptb_db_table_prefix: az_AZ
+      wptb_wp_msql_user: Ididntdoit
+      wptb_update_firewall: false
+      wptb_loclan: ['10.0.0.0/8', '192.168.0.0/16', '172.16.0.0/12']
+      wptb_email: "youremailaddress@youremaildomain.com"
+#      wptb_le_server: "https://acme-staging-v02.api.letsencrypt.org/directory"
+      wptb_le_server: "https://acme-v02.api.letsencrypt.org/directory"
+      wptb_site_cn: "hostname.internetdomain.com"
+      wptb_subj_alt_names:
+        - { type: 'DNS', value: '{{ wptb_site_cn }}'}
+        - { type: 'DNS', value: 'alias.internetdomain.com'}
+      wptb_back_up: true
+      wptb_back_up_days_to_keep: '14' # 'n Days'
+      wptb_back_up_weeks_to_keep: '4' # 'n Weeks'
+      wptb_back_up_months_to_keep: '12' # 'n Months'
+      wptb_back_up_weekly_day: 'Friday' # 'Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday'
+      wptb_back_up_monthly_date: '01'
+      wptb_back_up_yearly_date: ['01', '01'] # ['DD', 'MM']
+      wptb_patch_it: false
+      wptb_restore: false
+      wptb_restore_type: daily
+      wptb_restore_date: 2019-03-26
+```      
+
 
 License
 -------
 
-BSD
+GPL-3.0
 
 Author Information
 ------------------
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+TiggerFish https://www.bluegreenpla.net/index.php/wordpress_toolbox/

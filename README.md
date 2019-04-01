@@ -1,7 +1,15 @@
-Role Name
+wordpress_toolbox
 =========
 
 An Ansible role that will build and maintain a single site wordpress installation on CentOS 7 and Fedora 29.
+
+Features
+------------
+1. Installs all required components
+2. Updates firewall (If you really want it to)
+3. Gets and maintains ssl certs from letsencrypt
+4. Backup & Restore
+5. WordPress updates
 
 Requirements
 ------------

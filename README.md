@@ -11,49 +11,25 @@ A host/guest with a basic install of CentOS 7 or Fedora 29 and an internet domai
 Role Variables
 --------------
 
-# Database name for the wordpress database
-wptb_msql_db: unusual_name
+wptb_msql_db: The name for the wordpress database.
+wptb_msql_user: The name of the user for the wordpress database.
+wptb_db_table_prefix: The prefix for the wordpress database table names.
+wptb_update_firewall: true | false Run the firewall play, see my earlier comments about it being pants.
+wptb_loclan: A list of local lan addresses or networks that will be given TCP port 22 access if the firewall play runs.
+wptb_email: Email address used for the letsencrypt transaction.
+wptb_le_server: The letsencrypt server to request the ssl certificates from.
+wptb_site_cn: The common name (public hostname) of your webserver used for the letsencrypt transaction and the apache configuration.
+wptb_subj_alt_names: Subject alternate names for your website used for the letsencrypt transaction and the apache configuration.
+wptb_back_up: true | false Run the backup routine yes or no.
+wptb_back_up_days_to_keep: How long to keep daily backups in days.
+wptb_back_up_weeks_to_keep: How long to keep weekly backups in weeks.
+wptb_back_up_months_to_keep: How long to keep monthly backups in months.
+wptb_back_up_weekly_day: What day of the week weekly backups are taken.
+wptb_back_up_monthly_date: What day in the month monthly backups are taken.
+wptb_back_up_yearly_date: What date in the year yearly backups are taken.
+wptb_msql_root_pw: root password for the maria db. Note this var is in vars/main.yml and this file should be encrypted by vault or some other similar technology.
+wptb_wp_msql_pw: password for the wordpress database. Note this var is in vars/main.yml and this file should be encrypted by vault or some other similar technology.
 
-# Database username for the wordpress database
-wptb_msql_user: somebody_else
-
-# Database tab;e prefix
-wptb_db_table_prefix: 'azAZ_'
-
-# Firewall config. If update_firewall is set to false no firewall changes made
-# loclan should be set to the IP address or netowrk that ssh should be restriced to
-wptb_update_firewall: false
-wptb_loclan: ['10.0.0.0/8', '192.168.0.0/16', '172.16.0.0/12']
-
-# Email used for registration with letsencrypt and recovery contact.
-wptb_email: "youremailaddress@somedomain"
-
-# ACME Directory Resource URI. Use staging for testing
-wptb_le_server: "https://acme-staging-v02.api.letsencrypt.org/directory"
-#le_server: "https://acme-v02.api.letsencrypt.org/directory"
-
-# Webserver hostname
-wptb_site_cn: "hostname.internet.domain"
-wptb_subj_alt_names: # Don't change the first value but you can add as many more as you like.
-  - { type: 'DNS', value: '{{ wptb_site_cn }}'} # Don't change this
-  - { type: 'DNS', value: 'other_hostname.internet.domain'} # Include this only if you need it, add more as required.
-
-# Run/Configure backup routines
-wptb_back_up: false
-wptb_back_up_days_to_keep: '14' # 'n Days'
-wptb_back_up_weeks_to_keep: '4' # 'n Weeks'
-wptb_back_up_months_to_keep: '12' # 'n Months'
-wptb_back_up_weekly_day: 'Monday' # 'Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday'
-wptb_back_up_monthly_date: '01' # 'DD'
-wptb_back_up_yearly_date: ['01', '01'] # ['DD', 'MM']
-
-#Patch the existing installation of wordpress
-wptb_patch_it: false
-
-# Restore wordpress
-wptb_restore: false
-wptb_restore_type: daily|weekly|monthly|yearly
-wptb_restore_date: YYYY-MM-DD
 
 Dependencies
 ------------

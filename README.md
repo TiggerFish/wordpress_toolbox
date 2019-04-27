@@ -26,6 +26,7 @@ Role Variables
 * **wptb_loclan:** A list of local lan addresses or networks that will be given TCP port 22 access if the firewall play runs.
 * **wptb_email:** Email address used for the letsencrypt transaction.
 * **wptb_le_server:** The letsencrypt server to request the ssl certificates from.
+* **wptb_le_force:** yes|no to force an early letsencrypt certificate request.
 * **wptb_site_cn:** The common name (public hostname) of your webserver used for the letsencrypt transaction and the apache configuration.
 * **wptb_subj_alt_names:** Subject alternate names for your website used for the letsencrypt transaction and the apache configuration.
 * **wptb_back_up:** true | false Run the backup routine yes or no.
@@ -64,6 +65,7 @@ Example Playbook
       wptb_email: "youremailaddress@youremaildomain.com"
 #      wptb_le_server: "https://acme-staging-v02.api.letsencrypt.org/directory"
       wptb_le_server: "https://acme-v02.api.letsencrypt.org/directory"
+      wptb_le_force: no
       wptb_site_cn: "hostname.internetdomain.com"
       wptb_subj_alt_names:
         - { type: 'DNS', value: '{{ wptb_site_cn }}'}
@@ -80,6 +82,13 @@ Example Playbook
       wptb_restore_type: daily
       wptb_restore_date: 2019-03-26
 ```      
+
+Revisions
+-------
+27/04/19
+Updated the redirect to SSL method so that letsencrypt challenge requests aren't redirected to the https webroot.
+Added wptb_le_force variable to enable out of schedule (early) certificaate requests.
+Added function to clean up the .well-known/acme-challenge directory.
 
 
 License

@@ -28,6 +28,9 @@ wptb_subj_alt_names: # Don't change the first value but you can add as many more
   - { type: 'DNS', value: '{{ wptb_site_cn }}'} # Don't change this
   - { type: 'DNS', value: 'other_hostname.internet.domain'} # Include this only if you need it, add more as required.
 
+# Force an early letsencrypt request
+wptb_le_force: no
+
 # Run/Configure backup routines
 wptb_back_up: false
 wptb_back_up_days_to_keep: '14' # 'n Days'

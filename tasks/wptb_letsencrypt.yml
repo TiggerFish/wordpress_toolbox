@@ -39,6 +39,7 @@
 # Create a challenge
 - name: "wptb_letsencrypt.yml: Create a challenge for {{ wptb_site_cn }}"
   acme_certificate:
+    force: '{{wptb_le_force}}'
     acme_directory: '{{ wptb_le_server }}'
     acme_version: 2
     account_key_src: /etc/pki/tls/private/{{ wptb_site_cn }}-letsencrypt.key
@@ -71,6 +72,7 @@
 # Resolve the challenge and retrieve the certificate
 - name: "wptb_letsencrypt.yml: Validate challenge and get certs"
   acme_certificate:
+    force: '{{wptb_le_force}}'
     acme_directory: '{{ wptb_le_server }}'
     acme_version: 2
     account_key_src: /etc/pki/tls/private/{{ wptb_site_cn }}-letsencrypt.key
@@ -82,3 +84,15 @@
     chain_dest: /etc/pki/tls/certs/{{ wptb_site_cn }}-intermediate.crt
     data: "{{ challenge }}"
 
+# Clean up challenge files
+- name: locate files in the /var/www/html/.well-known/acme-challenge/ directory
+  find:
+    paths: /var/www/html/.well-known/acme-challenge/
+    pattern: "*"
+  register: found_files
+
+- name: remove all files from /var/www/html/.well-known/acme-challenge/
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  with_items: "{{ found_files.files }}"

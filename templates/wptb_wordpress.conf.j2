@@ -5,7 +5,10 @@
 
 {% endif %}{% endfor %}
 {% endif %}
- Redirect permanent / https://{{ wptb_site_cn }}
+ RewriteEngine on
+ RewriteCond %{HTTPS} !=on
+ RewriteCond %{REQUEST_URI} !^/.well-known/acme-challenge [NC]
+ RewriteRule ^/?(.*) https://%{SERVER_NAME}/$1 [R=301,L]
 </VirtualHost>
 
 

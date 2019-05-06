@@ -90,6 +90,9 @@ Updated the redirect to SSL method so that letsencrypt challenge requests aren't
 Added wptb_le_force variable to enable out of schedule (early) certificaate requests.
 Added function to clean up the .well-known/acme-challenge directory.
 
+06/05/12
+Addded some DROP rules to the firewall play. 
+
 
 License
 -------

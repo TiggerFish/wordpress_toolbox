@@ -68,11 +68,24 @@
     - '{{ wptb_loclan }}'
     - ['22']
   notify: wptb_restart_iptables
+
+- name: INPUT DROP the rest
+  iptables:
+    chain: INPUT
+    jump: DROP
+    action: append
+  notify: wptb_restart_iptables
+
+- name: FORWARD DROP
+  iptables:
+    chain: FORWARD
+    jump: DROP
+    action: append 
+  notify: wptb_restart_iptables
+  
 ## Save the changes
 - name: "wptb_firewall.yml: Save iptables"
   command: service iptables save
   args:
     warn: false
   notify: wptb_restart_iptables
-
-

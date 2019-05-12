@@ -39,6 +39,7 @@
   become: yes
   tags:
     - letsencrypt
+  when: not wptb_restore
 
 # Dowloads and configures wordpress
 - include: wptb_wordpress.yml
